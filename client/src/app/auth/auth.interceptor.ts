@@ -1,31 +1,29 @@
 // src/app/auth/auth.interceptor.ts
 import { Injectable } from '@angular/core';
 import {
-  HttpInterceptor, HttpRequest, HttpHandler, HttpEvent
+  HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse
 } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { AuthService } from './auth.service';
+import { Router } from '@angular/router';
 
-// src/app/auth/auth.interceptor.ts
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private auth: AuthService) {}
+  constructor(private auth: AuthService, private router: Router) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = this.auth.getToken();
-    console.log('[AuthInterceptor] token z AuthService:', token);
-    let authReq = req;
+    const authReq = token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
 
-    if (token) {
-      authReq = req.clone({
-        setHeaders: { Authorization: `Bearer ${token}` }
-      });
-      console.log('[AuthInterceptor] doklejony header Authorization:', authReq.headers.get('Authorization'));
-    }
-
-    console.log('[AuthInterceptor] nagłówki przed wysłaniem:', authReq.headers.keys());
-    return next.handle(authReq);
+    return next.handle(authReq).pipe(
+      catchError((err: HttpErrorResponse) => {
+        if (err.status === 401 || err.status === 403) {
+          this.auth.logout();
+          this.router.navigate(['/login'], { queryParams: { reason: 'unauthorized' } });
+        }
+        return throwError(() => err);
+      })
+    );
   }
 }
-
-

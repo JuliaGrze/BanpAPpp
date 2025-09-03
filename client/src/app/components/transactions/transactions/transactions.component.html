@@ -20,8 +20,8 @@
 </table> -->
 <!-- transactions-layout.component.html -->
 
-
-<h2>All Transactions</h2>
+<div class="container">
+  <h2>All Transactions</h2>
 <table >
   <thead>
     <tr>
@@ -34,7 +34,7 @@
   <tbody *ngIf="allTransactions.length > 0; else noResults">
     <tr *ngFor="let tx of allTransactions">
       <td>{{ tx.id }}</td>
-      <td>{{ tx.amount }}</td>
+      <td>{{ tx.amount | currency: 'PLN '}}</td>
         <td
           [ngClass]="{
             'status-confirmed': tx.status === 'CONFIRMED',
@@ -42,10 +42,12 @@
           }"
           >
           {{ tx.status }}
-      <td>{{ tx.timestamp | date:'yyyy-MM-dd HH:mm' }}</td>
+      <td>{{ tx.createdAt | date:'yyyy-MM-dd HH:mm' }}</td>
     </tr>
   </tbody>
 </table>
+</div>
+
 
 <!-- Szablon “brak wyników” -->
 <ng-template #noResults>

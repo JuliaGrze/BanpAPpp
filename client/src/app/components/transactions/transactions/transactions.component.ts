@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';              // <-- import
 import { TransactionService } from '../../../services/transaction.service';
 import { AuthService } from '../../../auth/auth.service';
@@ -7,7 +7,7 @@ import { AuthService } from '../../../auth/auth.service';
 @Component({
   selector: 'app-transactions',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, CurrencyPipe],
   templateUrl: './transactions.component.html',
   styleUrls: ['./transactions.component.scss']
 })
