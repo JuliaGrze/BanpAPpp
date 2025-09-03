@@ -1,0 +1,11 @@
+* text=auto
+*.java       text eol=lf
+*.kt         text eol=lf
+*.properties text eol=lf
+*.yml        text eol=lf
+*.yaml       text eol=lf
+*.sh         text eol=lf
+Dockerfile   text eol=lf
+*.sql        text eol=lf
+*.pem        text eol=lf
+*.crt        text eol=lf

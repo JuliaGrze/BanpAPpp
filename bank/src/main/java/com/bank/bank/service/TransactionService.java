@@ -6,8 +6,13 @@ import com.bank.bank.model.TransactionStatus;
 import com.bank.bank.model.User;
 import com.bank.bank.repository.TransactionRepository;
 import com.bank.bank.repository.UserRepository;
+import com.bank.bank.security.ShopEncryptor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -26,6 +31,8 @@ public class TransactionService {
     private final RSAService rsaService;
     private final RestTemplate restTemplate;
     private final Logger logger = LoggerFactory.getLogger(TransactionService.class);
+    private final ObjectMapper om = new ObjectMapper();
+    private final ShopEncryptor shopEncryptor;
 
     @Value("${external.shop.webhook-url}")
     private String webhookUrl;
@@ -40,6 +47,8 @@ public class TransactionService {
             String[] parts = decrypted.split(";");
             BigDecimal amount = new BigDecimal(parts[0]);
             String cardNumber = parts[1], expiry = parts[2], csv = parts[3];
+            String orderId = parts.length > 4 ? parts[4] : null;
+            tx.setOrderId(orderId);
 
             // 2) znajdź użytkownika
             User user = userRepository.findByCardNumber(cardNumber)
@@ -135,16 +144,30 @@ public class TransactionService {
             payload.setTransactionId(tx.getId());
             payload.setStatus(resultStatus);
             payload.setEmail(tx.getUser().getEmail());
-            payload.setAmount(tx.getAmount());
-            payload.setOrderId(String.valueOf(tx.getOrderId()));
+            payload.setAmount(tx.getAmount());           // BigDecimal
+            payload.setOrderId(tx.getOrderId());         // nie rób String.valueOf(null)
 
-//            payload.setTimestamp(tx.getCreatedAt());
-            logger.info("Posting webhook to {}: {}", webhookUrl, payload);
-            var resp = restTemplate.postForEntity(webhookUrl, payload, Void.class);
+            // 1) JSON -> String
+            String json = om.writeValueAsString(payload);
+
+            // 2) RSA (publiczny klucz SKLEPU) -> base64
+            String enc = shopEncryptor.encryptToBase64(json);
+
+            // 3) Wyślij jako text/plain
+            HttpHeaders h = new HttpHeaders();
+            h.setContentType(MediaType.TEXT_PLAIN);
+            HttpEntity<String> req = new HttpEntity<>(enc, h);
+
+            logger.info("Posting webhook to {} (status={}, txId={}, orderId={}, bodyLen={})",
+                    webhookUrl, resultStatus, tx.getId(), tx.getOrderId(), enc.length());
+
+            // ⬇️⬇️ KLUCZOWA ZMIANA: wysyłamy 'req', NIE 'payload'
+            var resp = restTemplate.postForEntity(webhookUrl, req, Void.class);
             logger.info("Webhook response: {}", resp.getStatusCode());
         } catch (Exception ex) {
             logger.error("Webhook failed for tx {}: {}", tx.getId(), ex.getMessage(), ex);
         }
     }
+
 
 }
