@@ -1,0 +1,60 @@
+<!-- <h2>Pending Transactions</h2>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Amount</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let tx of pendingTransactions">
+      <td>{{ tx.id }}</td>
+      <td>{{ tx.amount }}</td>
+      <td>
+        <button (click)="confirm(tx.id)">Confirm</button>
+        <button (click)="reject(tx.id)">Reject</button>
+      </td>
+    </tr>
+  </tbody>
+</table> -->
+<!-- transactions-layout.component.html -->
+
+
+<h2>All Transactions</h2>
+<table >
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Amount</th>
+      <th>Status</th>
+      <th>Timestamp</th>
+    </tr>
+  </thead>
+  <tbody *ngIf="allTransactions.length > 0; else noResults">
+    <tr *ngFor="let tx of allTransactions">
+      <td>{{ tx.id }}</td>
+      <td>{{ tx.amount }}</td>
+        <td
+          [ngClass]="{
+            'status-confirmed': tx.status === 'CONFIRMED',
+            'status-rejected':  tx.status === 'REJECTED'
+          }"
+          >
+          {{ tx.status }}
+      <td>{{ tx.timestamp | date:'yyyy-MM-dd HH:mm' }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- Szablon “brak wyników” -->
+<ng-template #noResults>
+  <tr>
+    <td colspan="4" class="no-results">
+        No transactions
+    </td>
+  </tr>
+</ng-template>
+
+
+

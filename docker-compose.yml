@@ -1,0 +1,54 @@
+# version: '3.8'
+
+# services:
+#   mysql:
+#     image: mysql:8.0
+#     restart: always
+#     environment:
+#       MYSQL_ROOT_PASSWORD: 2004
+#       MYSQL_DATABASE: bankdb
+#     ports:
+#       - "3310:3306"
+#     volumes:
+#       - db_data:/var/lib/mysql
+
+#   backend:
+#     build:
+#       context: ./bank
+#     ports:
+#       - "8081:8081"
+#     environment:
+#       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/bankdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+#       SPRING_DATASOURCE_USERNAME: root
+#       SPRING_DATASOURCE_PASSWORD: 2004
+#     depends_on:
+#       - mysql
+#     volumes:
+#       - ./bank/src/main/resources/private_key.pem:/src/main/resources/private_key.pem
+
+#   frontend:
+#     build:
+#       context: ./client
+#     ports:
+#       - "4200:80"
+#     depends_on:
+#       - backend
+
+# volumes:
+#   db_data:
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: bank-mysql
+    restart: always
+    ports:
+      - "3308:3306"  # zewnętrzny:wewnętrzny
+    environment:
+      MYSQL_ROOT_PASSWORD: 2004
+      MYSQL_DATABASE: bankdb
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:

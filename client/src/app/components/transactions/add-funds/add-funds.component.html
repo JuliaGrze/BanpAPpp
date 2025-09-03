@@ -1,0 +1,11 @@
+<div class="add-funds">
+  <h2>Twoje saldo: <span class="balance-amount">{{ balance | number:'1.2-2' }}</span> PLN</h2>
+
+  <form [formGroup]="depositForm" (ngSubmit)="onDeposit()">
+    <label>
+      Kwota do wpłaty:
+      <input type="number" formControlName="amount" placeholder="np. 100.00" />
+    </label>
+    <button type="submit" [disabled]="depositForm.invalid">Wpłać</button>
+  </form>
+</div>

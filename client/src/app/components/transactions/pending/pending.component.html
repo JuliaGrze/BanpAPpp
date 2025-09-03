@@ -1,0 +1,33 @@
+<h2>Pending Transactions</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Amount</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+
+  <!-- Jeżeli są pendingTransactions, pokaż <tbody>, w przeciwnym razie <ng-template> #noResults -->
+  <tbody *ngIf="pendingTransactions.length > 0; else noResults">
+    <tr *ngFor="let tx of pendingTransactions">
+      <td>{{ tx.id }}</td>
+      <td>{{ tx.amount }}</td>
+      <td>
+        <button class="confirm" (click)="confirm(tx.id)">Confirm</button>
+        <button class="reject" (click)="reject(tx.id)">Reject</button>
+      </td>
+    </tr>
+  </tbody>
+
+</table>
+
+<!-- Szablon “brak wyników” -->
+<ng-template #noResults>
+  <tr>
+    <td colspan="3" class="no-results">
+        No pending transactions
+    </td>
+  </tr>
+</ng-template>

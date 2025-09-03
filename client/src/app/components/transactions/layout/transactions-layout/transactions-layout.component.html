@@ -1,0 +1,16 @@
+<!-- src/app/transactions/layout/transactions-layout.component.html -->
+<nav>
+<div class="links">
+    <a routerLink="all"    routerLinkActive="active">All Transactions</a>
+    <a routerLink="pending" routerLinkActive="active">Pending Transactions</a>
+</div>
+<div class="balance">
+    Balance: {{ balance | number:'1.2-2' }} PLN
+    <button (click)="goAdd()">+ Add funds</button>
+    <button class="logout" (click)="logout()">Logout</button>
+</div>
+</nav>
+
+<div class="container">
+    <router-outlet></router-outlet>
+</div>
