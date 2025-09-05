@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule }          from '@angular/common';
+import { CommonModule, CurrencyPipe }          from '@angular/common';
 import { TransactionService }    from '../../../services/transaction.service';
 import { UserService }           from '../../../services/user.service';
 import { AuthService } from '../../../auth/auth.service';
@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'app-pending',
   standalone: true,
-  imports: [ CommonModule ],
+  imports: [ CommonModule, CurrencyPipe ],
   templateUrl: './pending.component.html',
   styleUrls: ['./pending.component.scss']
 })

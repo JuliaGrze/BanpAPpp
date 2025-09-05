@@ -2,6 +2,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, tap } from 'rxjs';
+import { interval, switchMap } from 'rxjs';
+
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -13,16 +15,23 @@ export class UserService {
   balance$ = this.balanceSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    // od razu przy starcie pobierz saldo
-    this.refreshBalance();
+    // od razu przy starcie
+    this.refreshBalance().subscribe();
+
+    // co 10 sekund
+    interval(10000).pipe(
+      switchMap(() => this.refreshBalance())
+    ).subscribe();
   }
+
 
   /** robimy jednokrotny GET i wpychamy wynik do subjecta */
   refreshBalance() {
-    this.http
-      .get<number>(`${this.apiUrl}/balance`)
-      .subscribe(b => this.balanceSubject.next(b));
-  }
+  return this.http
+    .get<number>(`${this.apiUrl}/balance`)
+    .pipe(tap(b => this.balanceSubject.next(b)));
+}
+
 
   /** wpłata -> zwraca nowe saldo i aktualizuje subject */
   deposit(amount: number) {

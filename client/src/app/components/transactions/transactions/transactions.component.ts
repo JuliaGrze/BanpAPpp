@@ -15,6 +15,8 @@ export class TransactionsComponent implements OnInit {
   email!: string;
   allTransactions: any[] = [];
   pendingTransactions: any[] = [];
+  sortKey: string = 'id';
+  sortAsc: boolean = true;
 
   constructor(
     private txSvc: TransactionService,
@@ -66,4 +68,25 @@ export class TransactionsComponent implements OnInit {
       this.checkPendingAndRedirect();  // po confirm/reject znów sprawdź pending
     });
   }
+
+  sort(key: string) {
+    if (this.sortKey === key) {
+      this.sortAsc = !this.sortAsc;
+    } else {
+      this.sortKey = key;
+      this.sortAsc = true;
+    }
+
+    this.allTransactions.sort((a, b) => {
+      if (a[this.sortKey] < b[this.sortKey]) return this.sortAsc ? -1 : 1;
+      if (a[this.sortKey] > b[this.sortKey]) return this.sortAsc ? 1 : -1;
+      return 0;
+    });
+  }
+
+  ariaSort(key: string): 'ascending' | 'descending' | 'none' {
+    if (this.sortKey !== key) return 'none';
+    return this.sortAsc ? 'ascending' : 'descending';
+  }
+
 }

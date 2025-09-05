@@ -25,10 +25,10 @@
 <table >
   <thead>
     <tr>
-      <th>ID</th>
-      <th>Amount</th>
-      <th>Status</th>
-      <th>Timestamp</th>
+      <th (click)="sort('id')"        [attr.aria-sort]="ariaSort('id')">ID</th>
+      <th (click)="sort('amount')"    [attr.aria-sort]="ariaSort('amount')">Amount</th>
+      <th (click)="sort('status')"    [attr.aria-sort]="ariaSort('status')">Status</th>
+      <th (click)="sort('createdAt')" [attr.aria-sort]="ariaSort('createdAt')">Timestamp</th>
     </tr>
   </thead>
   <tbody *ngIf="allTransactions.length > 0; else noResults">

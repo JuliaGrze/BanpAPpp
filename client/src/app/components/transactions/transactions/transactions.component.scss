@@ -219,3 +219,32 @@ h2 {
   border: 1px dashed #e0e0e0;
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.02);
 }
+
+th[aria-sort] {
+  cursor: pointer;
+  position: relative;
+  padding-right: 1.25rem; /* miejsce na strzałkę */
+  user-select: none;
+}
+
+/* aktywna kolumna: podkreślenie */
+th[aria-sort="ascending"],
+th[aria-sort="descending"] {
+  text-decoration: underline;
+  text-underline-offset: .3em;
+  text-decoration-thickness: 2px;
+}
+
+/* strzałki */
+th[aria-sort="ascending"]::after,
+th[aria-sort="descending"]::after {
+  position: absolute;
+  right: .5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: .75;
+  font-size: .8rem;
+  content: '';
+}
+th[aria-sort="ascending"]::after  { content: '▲'; }
+th[aria-sort="descending"]::after { content: '▼'; }

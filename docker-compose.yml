@@ -1,54 +1,53 @@
-# version: '3.8'
-
-# services:
-#   mysql:
-#     image: mysql:8.0
-#     restart: always
-#     environment:
-#       MYSQL_ROOT_PASSWORD: 2004
-#       MYSQL_DATABASE: bankdb
-#     ports:
-#       - "3310:3306"
-#     volumes:
-#       - db_data:/var/lib/mysql
-
-#   backend:
-#     build:
-#       context: ./bank
-#     ports:
-#       - "8081:8081"
-#     environment:
-#       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/bankdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-#       SPRING_DATASOURCE_USERNAME: root
-#       SPRING_DATASOURCE_PASSWORD: 2004
-#     depends_on:
-#       - mysql
-#     volumes:
-#       - ./bank/src/main/resources/private_key.pem:/src/main/resources/private_key.pem
-
-#   frontend:
-#     build:
-#       context: ./client
-#     ports:
-#       - "4200:80"
-#     depends_on:
-#       - backend
-
-# volumes:
-#   db_data:
-version: '3.8'
+# version: "3.8"
 services:
   mysql:
     image: mysql:8.0
     container_name: bank-mysql
     restart: always
-    ports:
-      - "3308:3306"  # zewnętrzny:wewnętrzny
     environment:
       MYSQL_ROOT_PASSWORD: 2004
       MYSQL_DATABASE: bankdb
+    ports:
+      - "3308:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p2004"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  bank:
+    build:
+      context: ./bank
+      dockerfile: Dockerfile
+    container_name: bank-app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker-compose
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/bankdb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 2004
+      SERVER_PORT: 8081
+      EXTERNAL_SHOP_WEBHOOK_URL: http://host.docker.internal:8080/api/bank/webhook/payment-status
+    ports:
+      - "8081:8081"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ./client   # katalog z Angularowym Dockerfile
+      dockerfile: Dockerfile
+    container_name: bank-frontend
+    ports:
+      - "4201:80"           # host:container → aplikacja Angular pod http://localhost:4201
+    depends_on:
+      - bank
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   mysql_data:

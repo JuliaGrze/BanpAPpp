@@ -11,5 +11,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByUserEmailAndStatus(String userEmail, TransactionStatus status);
     List<Transaction> findByUserAndStatus(User user, TransactionStatus status);
     List<Transaction> findByUser(User user);
+    List<Transaction> findByUser(User user, org.springframework.data.domain.Sort sort);
+
 
 }

@@ -1,5 +1,7 @@
 package com.bank.bank.service;
 
+import com.bank.bank.dto.InitTransactionRequest;
+import com.bank.bank.dto.InitTransactionResponse;
 import com.bank.bank.dto.WebhookDTO;
 import com.bank.bank.model.Transaction;
 import com.bank.bank.model.TransactionStatus;
@@ -168,6 +170,88 @@ public class TransactionService {
             logger.error("Webhook failed for tx {}: {}", tx.getId(), ex.getMessage(), ex);
         }
     }
+
+    @Transactional
+    public InitTransactionResponse initTransaction(InitTransactionRequest req) {
+        long t0 = System.currentTimeMillis();
+        logger.info("[INIT] start orderId={}, amount={}, curr={}, email={}",
+                req.orderId(), req.amount(), req.currency(), req.customerEmail());
+
+        try {
+            // 1) Znajdź usera (jeśli podano email)
+            User user = null;
+            if (req.customerEmail() != null && !req.customerEmail().isBlank()) {
+                user = userRepository.findById(req.customerEmail())
+                        .orElseThrow(() -> new RuntimeException("User not found: " + req.customerEmail()));
+                logger.debug("[INIT] user found email={}, balance={}", user.getEmail(), user.getBalance());
+            } else {
+                logger.debug("[INIT] no customerEmail provided – proceeding without user binding");
+            }
+
+            // 2) Przygotuj transakcję (status zdecydujemy przed zapisem)
+            Transaction tx = new Transaction();
+            tx.setOrderId(req.orderId());
+            tx.setAmount(req.amount());
+            tx.setCurrency(req.currency());
+            tx.setDescription(req.description());
+            tx.setCallbackUrl(req.callbackUrl());
+            tx.setCreatedAt(java.time.LocalDateTime.now());
+            if (user != null) tx.setUser(user);
+
+            // 3) Brak środków -> REJECTED
+            if (user != null && user.getBalance().compareTo(req.amount()) < 0) {
+                logger.info("[INIT] REJECTED insufficient funds: balance={}, amount={}",
+                        user.getBalance(), req.amount());
+                tx.setStatus(TransactionStatus.REJECTED);
+                tx = transactionRepository.save(tx);
+                logger.debug("[INIT] saved REJECTED txId={}", tx.getId());
+                sendWebhook(tx, "REJECTED");
+                logger.debug("[INIT] webhook sent for txId={} status=REJECTED", tx.getId());
+
+                logger.info("[INIT] done txId={} status=REJECTED took={}ms",
+                        tx.getId(), (System.currentTimeMillis() - t0));
+                return new InitTransactionResponse("tx_" + tx.getId(), tx.getStatus().name(), tx.getOrderId(), tx.getAmount());
+            }
+
+            // 4) Auto-CONFIRMED dla kwot < 100 (jeśli znamy usera)
+            if (user != null && req.amount().compareTo(BigDecimal.valueOf(100)) < 0) {
+                BigDecimal old = user.getBalance();
+                BigDecimal newBal = old.subtract(req.amount());
+                logger.info("[INIT] AUTO-CONFIRMED amount<100: oldBalance={} -> newBalance={}", old, newBal);
+
+                tx.setStatus(TransactionStatus.CONFIRMED);
+                user.setBalance(newBal);
+                userRepository.save(user);
+                tx = transactionRepository.save(tx);
+                logger.debug("[INIT] saved CONFIRMED txId={}", tx.getId());
+                sendWebhook(tx, "CONFIRMED");
+                logger.debug("[INIT] webhook sent for txId={} status=CONFIRMED", tx.getId());
+
+                logger.info("[INIT] done txId={} status=CONFIRMED took={}ms",
+                        tx.getId(), (System.currentTimeMillis() - t0));
+                return new InitTransactionResponse("tx_" + tx.getId(), tx.getStatus().name(), tx.getOrderId(), tx.getAmount());
+            }
+
+            // 5) Pozostałe przypadki -> PENDING
+            tx.setStatus(TransactionStatus.PENDING);
+            tx = transactionRepository.save(tx);
+            logger.info("[INIT] PENDING created txId={} (amount>=100 or user unknown)", tx.getId());
+            // opcjonalnie: sendWebhook(tx, "PENDING");
+
+            logger.info("[INIT] done txId={} status=PENDING took={}ms",
+                    tx.getId(), (System.currentTimeMillis() - t0));
+            return new InitTransactionResponse("tx_" + tx.getId(), tx.getStatus().name(), tx.getOrderId(), tx.getAmount());
+
+        } catch (Exception ex) {
+            logger.error("[INIT] unexpected error orderId={} amount={} msg={}",
+                    req.orderId(), req.amount(), ex.getMessage(), ex);
+            throw ex; // pozwól wyżej zadecydować, ale mamy pełny log
+        }
+    }
+
+
+
+
 
 
 }

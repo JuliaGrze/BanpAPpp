@@ -13,7 +13,7 @@
   <tbody *ngIf="pendingTransactions.length > 0; else noResults">
     <tr *ngFor="let tx of pendingTransactions">
       <td>{{ tx.id }}</td>
-      <td>{{ tx.amount }}</td>
+      <td>{{ tx.amount | currency: 'PLN '}}</td>
       <td>
         <button class="confirm" (click)="confirm(tx.id)">Confirm</button>
         <button class="reject" (click)="reject(tx.id)">Reject</button>

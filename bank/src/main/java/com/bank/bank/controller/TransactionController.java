@@ -10,6 +10,7 @@ import com.bank.bank.model.User;
 import com.bank.bank.repository.TransactionRepository;
 import com.bank.bank.repository.UserRepository;
 import com.bank.bank.service.TransactionService;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,15 +35,20 @@ public class TransactionController {
 
     // Pobieranie wszystkich transakcji
     @GetMapping("/all/{email}")
-    public List<TransactionDTO> getAllTransactions(@PathVariable String email) {
-        // Możesz dodać logikę sprawdzającą token i uprawnienia
+    public List<TransactionDTO> getAllTransactions(@PathVariable String email,
+                                                   @RequestParam(defaultValue = "id") String sortBy,
+                                                   @RequestParam(defaultValue = "asc") String order) {
         User user = userRepository.findById(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return transactionRepository.findByUser(user)
+
+        Sort.Direction direction = order.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+        return transactionRepository.findByUser(user, Sort.by(direction, sortBy))
                 .stream()
                 .map(TransactionMapper::toDTO)
                 .collect(Collectors.toList());
     }
+
 
     // Pobieranie potwierdzonych transakcji
     @GetMapping("/confirmed/{email}")
@@ -93,30 +99,34 @@ public class TransactionController {
     }
 
     // w com.bank.bank.controller.TransactionController
+//    @PostMapping("/init")
+//    public InitTransactionResponse init(@RequestBody InitTransactionRequest req) {
+//        Transaction tx = new Transaction();
+//        tx.setOrderId(req.orderId());   // ID zamówienia ze sklepu
+//        tx.setAmount(req.amount());             // kwota (BigDecimal)
+//        tx.setCurrency(req.currency());         // np. PLN
+//        tx.setStatus(TransactionStatus.PENDING); // zawsze startuje jako PENDING
+//        tx.setDescription(req.description());   // opis np. "Order ORD-..."
+//        tx.setCallbackUrl(req.callbackUrl());   // gdzie bank ma wysłać wynik
+//        tx.setCreatedAt(java.time.LocalDateTime.now()); // timestamp
+//
+//        // >>> PRZYPISANIE UŻYTKOWNIKA <<<
+//        if (req.customerEmail() != null && !req.customerEmail().isBlank()) {
+//            User user = userRepository.findById(req.customerEmail())
+//                    .orElseThrow(() -> new RuntimeException("User not found: " + req.customerEmail()));
+//            tx.setUser(user);
+//        }
+//
+//        tx = transactionRepository.save(tx);
+//
+//
+//        // zwracamy np. "tx_123" – sklep to zapisze do payment.bank_transaction_id
+//        return new InitTransactionResponse("tx_" + tx.getId(), tx.getStatus().name(), tx.getOrderId(), tx.getAmount());
+//
+//    }
     @PostMapping("/init")
     public InitTransactionResponse init(@RequestBody InitTransactionRequest req) {
-        Transaction tx = new Transaction();
-        tx.setOrderId(req.orderId());   // ID zamówienia ze sklepu
-        tx.setAmount(req.amount());             // kwota (BigDecimal)
-        tx.setCurrency(req.currency());         // np. PLN
-        tx.setStatus(TransactionStatus.PENDING); // zawsze startuje jako PENDING
-        tx.setDescription(req.description());   // opis np. "Order ORD-..."
-        tx.setCallbackUrl(req.callbackUrl());   // gdzie bank ma wysłać wynik
-        tx.setCreatedAt(java.time.LocalDateTime.now()); // timestamp
-
-        // >>> PRZYPISANIE UŻYTKOWNIKA <<<
-        if (req.customerEmail() != null && !req.customerEmail().isBlank()) {
-            User user = userRepository.findById(req.customerEmail())
-                    .orElseThrow(() -> new RuntimeException("User not found: " + req.customerEmail()));
-            tx.setUser(user);
-        }
-
-        tx = transactionRepository.save(tx);
-
-
-        // zwracamy np. "tx_123" – sklep to zapisze do payment.bank_transaction_id
-        return new InitTransactionResponse("tx_" + tx.getId(), tx.getStatus().name(), tx.getOrderId(), tx.getAmount());
-
+        return transactionService.initTransaction(req);
     }
 
 

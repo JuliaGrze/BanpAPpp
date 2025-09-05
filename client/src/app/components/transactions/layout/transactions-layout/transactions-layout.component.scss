@@ -110,3 +110,19 @@ nav {
     }
   }
 }
+
+nav {
+  /* zmniejsz lewy padding jeśli chcesz logo bliżej krawędzi */
+  padding: 0.6rem 1.75rem 0.6rem 0.75rem;
+}
+
+nav .brand {
+  display: flex;
+  align-items: center;
+}
+
+nav .brand .logo {
+  display: block;   /* usuwa szczelinę inline pod obrazkiem */
+  margin: 0;        /* na wszelki wypadek */
+  line-height: 0;   /* niekiedy pomaga na mikroszczelinę */
+}

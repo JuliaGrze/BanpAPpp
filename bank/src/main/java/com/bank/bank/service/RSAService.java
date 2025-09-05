@@ -1,9 +1,12 @@
 package com.bank.bank.service;
 
 import jakarta.annotation.PostConstruct;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,7 +22,12 @@ public class RSAService {
 
     @PostConstruct
     public void init() throws Exception {
-        String privateKeyPem = Files.readString(Path.of("src/main/resources/private_key.pem"));
+//        String privateKeyPem = Files.readString(Path.of("src/main/resources/private_key.pem"));
+        Resource resource = new ClassPathResource("private_key.pem");
+        String privateKeyPem;
+        try (InputStream is = resource.getInputStream()) {
+            privateKeyPem = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        }
         privateKeyPem = privateKeyPem
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")

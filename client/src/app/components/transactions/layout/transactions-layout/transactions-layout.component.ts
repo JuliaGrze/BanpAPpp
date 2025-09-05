@@ -4,6 +4,7 @@ import { CommonModule }       from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { UserService }        from '../../../../services/user.service';
 import { AuthService } from '../../../../auth/auth.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-transactions-layout',
@@ -12,25 +13,16 @@ import { AuthService } from '../../../../auth/auth.service';
   templateUrl: './transactions-layout.component.html',
   styleUrls:   ['./transactions-layout.component.scss']
 })
-export class TransactionsLayoutComponent implements OnInit {
-  balance = 0;
+export class TransactionsLayoutComponent {
+  balance$!: Observable<number>; 
 
   constructor(
     private userSvc: UserService,
     private auth: AuthService,
     private router: Router
-  ) {}
-
-  ngOnInit(): void {
-    this.loadBalance();
+  ) {
+    this.balance$ = this.userSvc.balance$;  // przypisanie po wstrzyknięciu
   }
-
-  loadBalance(): void {
-  this.userSvc.balance$
-    .subscribe({
-      next: (b: number) => this.balance = b,
-      error: err => console.error('Błąd przy pobieraniu salda:', err)
-    })};
 
   goAdd() {
     this.router.navigate(['transactions','add']);
@@ -41,3 +33,4 @@ export class TransactionsLayoutComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 }
+
